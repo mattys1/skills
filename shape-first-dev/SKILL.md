@@ -102,6 +102,16 @@ export function clearSession(): void { ... }
 
 After the programmer acknowledges Phase 2 has started, your stance is: **wait**. Do not offer to shape components yourself. Do not propose implementations. If the programmer shares a shape, review it. If they ask you a question, answer it — their questions take priority over anything else.
 
+**After each shape is shared, run `git diff` (and `git status` for untracked files) to get the full picture of what changed.** Don't rely solely on what the programmer pastes into the conversation — they may have edited multiple files, made incidental fixes, or forgotten to mention a related change. The diff is the ground truth.
+
+```bash
+git diff          # changes to tracked files
+git status        # catch any untracked new files
+git diff --cached # any staged changes
+```
+
+If the diff reveals files or changes the programmer didn't mention, surface them: "I also see changes in `X` — is that part of this shape or something else?" Let the programmer clarify before accepting the shape.
+
 When they share a shape, ask yourself honestly:
 - Do I understand this component's responsibility?
 - Is the public API clear enough that I could implement it without guessing?
