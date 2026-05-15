@@ -186,6 +186,26 @@ This section tells the implementing agent — and the programmer reviewing later
 
 The programmer reviews this document. They may modify it, add constraints, or ask you to revise sections. Only when they sign off does implementation begin (by them, or by a delegated agent).
 
+### Stashing shapes before handoff
+
+Once the programmer has signed off on the plan, **stash the shape files before any implementation begins.**
+
+The shape files did their job — they drove the design. Leaving them in the working tree risks the implementing agent patching or anchoring to stub bodies instead of writing clean implementations. A blank slate produces better output.
+
+**How to do it:**
+
+1. Collect the paths of every file that was written or modified as part of shaping in Phase 2.
+2. Run:
+   ```bash
+   git stash push --message "shapes: <feature-name>" -- <file1> <file2> ...
+   ```
+3. Confirm the stash was created (`git stash list`) and the files are gone from the working tree.
+4. Tell the programmer: "Shape files stashed (`git stash list` to verify). The implementing agent will work from a clean slate."
+
+If the programmer or implementing agent ever needs to reference a shape, they can inspect it with `git stash show -p stash@{0}` without popping it. The shapes are preserved — just out of the way.
+
+**If `git stash` fails** (untracked files, no git repo, etc.), fall back to moving the shape files to a temporary directory (e.g. `/tmp/shapes-<feature-name>/`) and note the location. Don't block on this — the implementing agent's clean slate matters more than the stash mechanism.
+
 ---
 
 ## General Principles
