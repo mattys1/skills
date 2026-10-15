@@ -2,13 +2,8 @@
 name: shape-first-dev
 description: >
   A structured, programmer-led feature development workflow that replaces ad-hoc vibe coding
-  with deliberate design. Use this skill when a user wants to plan and implement a feature
-  collaboratively, especially for non-trivial features where architecture matters. Triggers on
-  phrases like "let's plan a feature", "help me design/implement X", "I want to add Y to my
-  codebase", "shape-first", "let's spec out", or whenever the user wants to think through a
-  feature before jumping into code. The key idea: no implementation planning starts until the
-  programmer has shaped every component in code form — even if that code does not compile. Use
-  this skill proactively for any feature that involves multiple components or non-obvious coupling.
+  with deliberate design. 
+disable-model-invocation: true
 ---
 
 # Shape-First Development
