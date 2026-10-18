@@ -18,7 +18,8 @@ The flow has four phases, with an explicit handover between them:
 0. **Gather**: load the spec and everything it rests on, then build the decision ledger.
 1. **Propose the shape**: write it into the code and explain it in chat, with usage examples.
 2. **Iterate**: read the user's edits, check them against the ledger, and revise until they agree.
-3. **Plan**: write the implementation plan around the agreed shape, then stash the shapes.
+3. **Hand over**: finish the shape into a compiling skeleton, write the plan as a **delta**
+   over it, and commit both.
 
 Say out loud when you move from one phase to the next.
 
@@ -67,7 +68,7 @@ shape as much as the spec does. Three things to check while you read:
 - **A prerequisite spec hasn't landed in the code yet:** say so. The shape then builds on
   that spec's agreed design, not on today's code.
 - **A file you'll shape has uncommitted changes:** ask the user to commit or stash it
-  first. Otherwise the final stash would take their changes with the shapes.
+  first. Otherwise the shape commit would take their changes with it.
 
 ### The decision ledger
 
@@ -106,7 +107,7 @@ A shape is illustrative code. It does not have to compile. It should contain:
 - short doc comments that tie items to ledger entries (`// L3`) and explain intent;
 - open points as `// Q:` comments.
 
-Leave out algorithms and logic. That belongs in the plan.
+Leave out algorithms and logic: filling them in is the implementer's work.
 
 Follow the codebase: its naming, module layout, error types, idioms. Use glossary terms
 for every domain concept and never a term the glossary lists under _Avoid_.
@@ -192,90 +193,85 @@ whether to decide it now or take it back to grilling.
 
 ---
 
-## Phase 3: Plan
+## Phase 3: Hand over
 
-### Where it goes
+The agreed shape stays in the code as the implementer's skeleton. The plan is a **delta**
+over it: only what the implementer can't read off the shape or the code.
 
-If the repo already keeps plans somewhere (e.g. `.claude/plans/<feature>/`), follow
-that layout. Otherwise ask the user where to put it. Use one file per build step if the
-spec breaks naturally into steps, otherwise a single file.
+### Finish the shape
 
-### If a question comes up while writing
+1. **Contracts into doc comments.** Behaviour a caller relies on (what a function
+   guarantees, rejects, or drops silently) goes in the doc comment of its item, where it
+   outlives the plan.
+2. **Tests as stubs.** Write every test the spec asks for, plus any the shape makes
+   necessary, at its real location: the name, a `todo!()` body, and a comment stating
+   what it asserts. Keep pinned numbers exactly as the spec states them. Stubs fail until
+   their step implements them; that is the progress signal.
+3. **Clean up.** Remove the `SHAPE` markers. Keep the ledger tags (`// L3`): they tie the
+   code to the plan until the implementer strips them.
+4. **Build.** The skeleton compiles (`cargo check` or the language's equivalent), so the
+   existing suite runs against it from the first step.
 
-Stop and ask. An open question at this stage means something wasn't settled in shaping.
-The plan has no "open questions" section.
+Done when it builds and no marker or `// Q:` remains.
 
-### Structure
+### Write the plan
 
-Write for two readers: the user, who will review and edit it, and an implementing agent
-that receives only this document. Use glossary terms throughout.
+If the repo already keeps plans somewhere (e.g. `.claude/plans/<feature>/`), follow that
+layout; otherwise ask the user where. One file, unless the steps are long enough to split.
 
-**Source.** The spec issue (link), the issues it depends on, and the decision ledger
-restated in full.
+If a question comes up while writing, stop and ask. An open question here means
+something wasn't settled in shaping; the plan has no "open questions" section.
 
-**Reading list.** The docs the implementing agent should read before starting:
-glossary, relevant ADRs, linked decision records, the repo's code rules, the spec issue. Say
-explicitly that they are reference material and are not to be edited as part of the
-implementation.
+Every line passes the **delta** test: could the implementer read this off the shape or the
+code? If so, cut it. Readers are the user, who reviews it, and an implementing agent that
+gets this file plus the committed shape. Use glossary terms throughout.
 
-**Context.** The current state of the code this touches: what exists, where it lives,
-how it is structured, and what this spec changes about it. Enough that the implementer
-can find their way without having seen the code.
+**Header.** The spec issue link, and one line: the shape in the code is binding; its
+`// L…` tags cite the ledger below.
 
-**Agreed shape.** The final shape code, verbatim, per file, with the shape markers
-removed. Note which parts are binding (public API, types, ownership) and which are
-illustrative.
+**Ledger.** The decision ledger and the gaps settled during shaping, numbered as in the
+session. The code cites it, so restate it in full.
 
-**Implementation sequence.** The build order and the reason for it: dependencies, what
-can be tested early, where the risk is.
+**Steps.** The build order and why. Per step, the shaped items it fills (by path), then
+notes of four kinds only:
+- **invariants** the types don't enforce: an order, a uniqueness, "exactly one",
+  all-or-nothing;
+- **behaviour** that is internal, so no doc comment states it: edge cases, error paths,
+  which warning fires;
+- **corrections** to code outside the shape: old behaviour to remove, call sites to
+  update, existing tests whose pinned values change;
+- **gotchas** found while shaping: a pattern to follow, a helper to avoid.
 
-**Per-step changes.** For each step: files touched, what the implementation does
-(logic, edge cases, error handling, warnings), and which ledger items it realizes.
-This is where the behaviour from the spec goes.
+**Guardrails.** Signs a decision was broken that a green suite won't catch, each citing
+its entry: "`Graph` imports `ShapeStore` → L4".
 
-**Tests.** Every test the spec asks for, plus any the shape makes necessary. Keep
-pinned numbers exactly as the spec states them.
+**Done.** Every stub implemented and passing, the existing suite green, no `todo!()` or
+ledger tag left.
 
-**Success criteria.**
-- *Done means*: the tests pass, existing equivalence and round-trip tests still pass,
-  and the public API matches the agreed shape.
-- *How the code should look*: the structural properties a correct implementation has.
-- *How the code should not look*: concrete signs that a decision was broken even though
-  tests pass, e.g. "if `Graph` imports `ShapeStore`, L4 was violated".
+Before presenting, check coverage: every ledger entry is realized by a tag in the shape, a
+test stub, or a plan note. An entry with none is a hole in the hand-over.
 
-**Traceability.** A table mapping each ledger entry to the step and test that cover it.
-Every entry must appear. If one doesn't, the plan is incomplete.
+Present the plan and let the user revise it and the shape.
 
-Present the plan and let the user revise it. Implementation starts only after they sign
-off.
+### Commit
 
-### Stash the shapes
-
-After sign-off, take the shape files out of the working tree, so the implementer starts
-from the plan instead of patching stubs:
+After sign-off, commit the skeleton and the plan together, so the implementer starts from
+both and `git diff` against this commit shows exactly the implementation:
 
 ```bash
-git stash push --message "shapes: <feature>" -- <every shaped file>
-git stash list
+git add <every shaped file> <plan files>
+git commit -m "shape: <feature>"
 ```
 
-`git stash push` with paths takes staged and unstaged changes alike. New files are
-included because they were staged. Confirm the files are gone from the working tree
-(newly created files should no longer exist), then tell the user:
-
-> Shapes stashed as `shapes: <feature>`. View with `git stash show -p stash@{0}`.
-> The plan carries the agreed shape verbatim.
-
-If stashing fails, move the files to a scratch directory instead, restore any edited
-tracked files with `git restore --staged --worktree`, and tell the user where the copies
-are.
+If a hook rejects the commit, show the user the failure and fix the shape. Then tell the
+user the commit hash and that implementation starts from it.
 
 ---
 
 ## Principles
 
 - **Decisions over shapes, shapes over plans.** The spec decides, the shape expresses,
-  the plan executes. Never let a later stage quietly change an earlier one.
+  the plan carries only what the shape can't. Never let a later stage quietly change an earlier one.
 - **Cite, don't assert.** When you flag or reject something, point at the ledger entry,
   glossary term or code rule behind it.
 - **The user is the designer within the decisions.** On anything the spec leaves open,
