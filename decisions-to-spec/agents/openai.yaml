@@ -1,0 +1,5 @@
+interface:
+  display_name: "Decisions To Spec"
+  short_description: "Turn a decision-referencing issue into a spec"
+policy:
+  allow_implicit_invocation: false
