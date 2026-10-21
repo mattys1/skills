@@ -58,6 +58,8 @@ name it, tell the user it belongs to grilling, and carry on with what is settled
 
 ## Phase 0: Gather
 
+Before doing anything, create a new branch, if currently on `master` or `main`.
+
 Read the sources above, including issue comments, the code the spec touches, and the code
 rules in `CLAUDE.md`; the code rules constrain the shape as much as the spec does. Check:
 
@@ -192,9 +194,10 @@ Done when it builds and no marker or `// Q:` remains.
 
 ### Write the plan
 
-Follow the repo's plan layout if it has one (e.g. `.claude/plans/<feature>/`); otherwise ask
-where. One file, unless the steps are long enough to split. A question that comes up while
-writing means shaping left something open: stop and ask.
+The plan is a **plan dir** of its own, `<plans>/<feature>/`, holding `plan.md` (plus one file
+per step if the steps are long enough to split). `<plans>` is the repo's plan location if it
+has one (e.g. `.claude/plans/`); otherwise ask where. A question that comes up while writing
+means shaping left something open: stop and ask.
 
 Every line passes the **delta** test: could the implementer read this off the shape or the
 code? If so, cut it. Readers: the user, who reviews it, and an implementing agent that gets
@@ -232,5 +235,5 @@ git add <every shaped file> <plan files>
 git commit -m "shape: <feature>"
 ```
 
-If a hook rejects it, show the user the failure and fix the shape. Report the commit hash:
-implementation starts from it.
+If a hook rejects it, show the user the failure and fix the shape. Report the commit hash and
+the next command: `/implement-shape <plan dir>`.
