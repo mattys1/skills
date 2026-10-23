@@ -185,12 +185,11 @@ over it: only what the implementer can't read off the shape or the code.
    at its real location: the name, a `todo!()` body, and a comment stating what it
    asserts, with pinned numbers exactly as the spec states them. Stubs stay red until
    their step implements them; that is the progress signal.
-3. **Clean up.** Remove the `SHAPE` markers. Keep the ledger tags: they tie the code to the
-   plan until the implementer strips them.
-4. **Build.** The skeleton compiles (`cargo check` or the equivalent), so the existing
+3. **Build.** The skeleton compiles (`cargo check` or the equivalent), so the existing
    suite runs against it from the first step.
 
-Done when it builds and no marker or `// Q:` remains.
+Leave the shaping comments (`SHAPE` markers, resolved `// Q:` points) in place: a
+subagent strips them before the commit. Done when it builds.
 
 ### Write the plan
 
@@ -227,8 +226,27 @@ revise the plan and the shape.
 
 ### Commit
 
-After sign-off, commit skeleton and plan together, so `git diff` against this commit shows
-exactly the implementation:
+After sign-off, stage skeleton and plan (`git add <every shaped file> <plan files>`), so
+any further change shows up as unstaged.
+
+**Strip the shaping comments.** Spawn one fresh, non-fork subagent (a fork inherits your
+model) on a cheap model (a model like haiku, `effort: "medium"`). It starts without this
+session's context, so give it the list of shaped files, tell it that `git diff HEAD` shows
+what shaping added, and these rules:
+
+- **Remove**: `SHAPE(…)` and `/SHAPE` marker lines; `// Q:` comments; comments addressed
+  to the user or recording the shaping discussion (alternatives considered, "agreed in
+  round 2", rejected edits).
+- **Keep**: doc comments stating intent or contracts; ledger tags (`// L3`); the comment
+  in each test stub stating what it asserts; every comment that was in the file before
+  shaping.
+- Delete comments only; leave all code as it is. Don't stage or commit.
+
+When it returns, check `git diff`: every changed line is a removed comment from the list
+above. Restore anything else.
+
+Then commit skeleton and plan together, so `git diff` against this commit shows exactly the
+implementation:
 
 ```bash
 git add <every shaped file> <plan files>
