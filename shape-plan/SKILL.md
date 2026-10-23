@@ -28,7 +28,7 @@ Four phases; say out loud when you move from one to the next:
 
 Resolve disagreements in this order, highest first:
 
-1. **The spec's resolution.** The `## Resolution` of the issue (body or comments), plus
+1. **The spec's resolution.** What the spec / issue has resolved (body or comments), plus
    any "Requirement from …" sections other specs pushed into it.
 2. **Changes agreed on the parent issue / map** (e.g. "Changes agreed while charting").
    They override older decision records they explicitly reverse.
