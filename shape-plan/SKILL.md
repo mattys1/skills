@@ -16,7 +16,8 @@ carries only what the shape can't say.
 
 Four phases; say out loud when you move from one to the next:
 
-0. **Gather**: load the spec and everything it rests on, then build the decision ledger.
+0. **Gather**: load the spec and everything it rests on, map the code, then build the
+   decision ledger.
 1. **Propose**: write the shape into the code and explain it in chat, with usage examples.
 2. **Iterate**: read the user's edits, check them against the ledger, revise until they agree.
 3. **Hand over**: finish the shape into a compiling skeleton, write the plan as a **delta**
@@ -60,14 +61,30 @@ name it, tell the user it belongs to grilling, and carry on with what is settled
 
 Before doing anything, create a new branch, if currently on `master` or `main`.
 
-Read the sources above, including issue comments, the code the spec touches, and the code
-rules in `CLAUDE.md`; the code rules constrain the shape as much as the spec does. Check:
+Read the sources above, including issue comments, and the code rules in `CLAUDE.md`; the
+code rules constrain the shape as much as the spec does. Check:
 
 - **No resolution, or decisions still open:** stop. This skill needs locked decisions.
 - **A prerequisite spec hasn't landed in the code:** say so; the shape builds on that
   spec's agreed design, not today's code.
 - **A file you'll shape has uncommitted changes:** ask the user to commit or stash it
   first, or the shape commit would take their changes with it.
+
+### The code map
+
+Code reaches you through a **code map**. Spawn one fresh, non-fork subagent on haiku with
+`effort: "high"`. It starts without this session's context, so give it the repo path, the
+links to the spec and its linked issues for it to fetch itself, and the modules the spec
+touches. It returns structure with a `path:line` on every entry:
+
+- **files and modules** in the area, one line each on what they own;
+- **interfaces**: public types with their fields, signatures, trait impls, error types;
+- **seams**: who owns what, who calls whom across module boundaries;
+- **call sites** where the shaped code will be used: importer, exporter, tests;
+- **conventions** the shape must follow: naming, module layout, test helpers.
+
+From the map, open a `path:line` range only where a ledger entry, a gap or a usage example
+needs the body.
 
 ### The decision ledger
 
