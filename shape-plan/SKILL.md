@@ -149,7 +149,18 @@ Per component:
    filling it, the exporter reading it, a test asserting on it). A signature shows its
    problems only at the call site.
 
-Then list the `// Q:` points and gaps for the user to decide.
+Then list the `// Q:` points and gaps for the user to decide. The user reads this list
+cold, so make each item stand alone:
+
+- the `path:line` of the code it concerns (the `// Q:` comment, or the shaped item a gap
+  affects); for a gap with no code yet, the spec section it comes from;
+- what is being decided, restated in a sentence, with any other label it leans on (a
+  ledger entry, a spec rule) spelled out rather than cited bare.
+
+```
+- Q1 `src/store/segment.rs:14`: segment length and address span, the two consts on
+  `Segment`. I propose 1024 and 2^24.
+```
 
 ### End the round
 
@@ -180,7 +191,8 @@ When the user has edited or replied:
      the wrong place, an invariant that could live in a type, an awkward call site), say
      so once, specifically, then follow their decision.
 3. **Revise.** Update the shape files. In chat: what changed and why, updated usage for
-   anything whose call sites changed, what is still open. Stage again, so the next diff
+   anything whose call sites changed, what is still open (listed as in Phase 1, with
+   `path:line` re-read after your revision). Stage again, so the next diff
    shows only the user's new edits.
 
 Repeat until the user explicitly agrees. Then summarize the agreed shape per component,
