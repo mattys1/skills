@@ -1,0 +1,5 @@
+interface:
+  display_name: "Writing A Spec"
+  short_description: "Write and publish a spec from a decision ledger"
+policy:
+  allow_implicit_invocation: true
