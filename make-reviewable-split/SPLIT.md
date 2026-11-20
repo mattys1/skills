@@ -6,8 +6,14 @@ You build the **review branch** `<source branch>-review`: the source branch's fu
 
 A **group** is one coherent change a reviewer reads as a unit, ending at a state a reviewer could stop at. The review branch is a sequence of groups.
 
-- **Merge groups**: when the source branch's first-parent history (`git log --first-parent --reverse <base>..<source>`) is a chain of merge commits (one per ticket, as `implement-spec` produces), each merge is one group, in that order.
-- **Planned groups**: otherwise, plan them from the whole diff, using the source PR's commits and linked issues as hints.
+Groups are cut from the **final diff** (`git diff <base>...<source>`). The source branch's history is a hint for grouping, never a state to replay: code it wrote in one ticket and rewrote in a later one reaches the review branch only in its final form.
+
+- **Ticket groups**: when the source branch's first-parent history (`git log --first-parent --reverse <base>..<source>`) is a chain of merge commits (one per ticket, as `implement-spec` produces), each ticket is one group, in merge order. `git blame --first-parent <base>..<source> -- <file>` attributes each final line to the merge that last wrote it, which places it in that ticket's group. Keep a unit (function, type, test block) whole in the group that owns most of it, so a group may absorb lines blamed to another ticket; drop a ticket whose lines were all absorbed or rewritten.
+- **Planned groups**: otherwise, plan them from the final diff, using the source PR's commits and linked issues as hints.
+
+## Final form
+
+Every line of the final diff is written by exactly one commit, as it stands in the source branch's tree; later commits add around it and leave it alone. Order commits by dependency (definitions before their callers) so each one builds from final-form lines alone. When two steps only build through an intermediate version of some line, merge them into one commit.
 
 ## Line counts
 
@@ -26,7 +32,7 @@ Each commit is one **logical step** a reviewer can understand alone. Order a gro
 5. **test commits**: all of the group's test code, titled `test(<group>): …`;
 6. bulk data, titled `data(<group>): …`.
 
-`<group>` is the group's ticket (`#227`) for merge groups, or a short slug for planned groups. Every other commit is titled `<summary> (<group>)`. **Prod** commits (1–4) carry zero test code, so filtering out `test(` commits leaves exactly the production change.
+`<group>` is the group's ticket (`#227`) for ticket groups, or a short slug for planned groups. Every other commit is titled `<summary> (<group>)`. **Prod** commits (1–4) carry zero test code, so filtering out `test(` commits leaves exactly the production change.
 
 Tests often live in the same file as the code (Rust `#[cfg(test)] mod tests { … }`). The prod commit writes the file without the test block; the test commit adds the block. A declaration that pulls in a separate test file (`#[cfg(test)] mod tests;`) goes in the test commit with the file it declares.
 
@@ -36,11 +42,12 @@ A group under ~500 reviewable lines can be one prod commit, still followed by it
 
 Work in a fresh worktree of the base branch on a new branch `<source branch>-review`.
 
-1. Determine the groups. For each, its **target**: a merge group's target is its merge commit's tree; a planned group's target is the state you plan for it, and the last group's target is the source branch's tree.
-2. For each group: read the diff from the previous target to this one, plan its commits, then build them by writing each commit's file states directly (`git checkout <commit> -- <path>` for a file that lands whole; edit the file for one that lands in parts). Commit each step.
-3. **Check** after each group, all must hold:
-   - for a merge group, `git diff <merge> HEAD` is empty;
-   - every commit in the group builds with the repo's fast build check (for Rust: `git rebase -x 'cargo check --all-targets' <group start>`, which rewrites nothing when every check passes).
-4. At the end, the full test suite passes at HEAD, and `git diff <source branch> HEAD` is empty.
-5. If a check fails and reshaping the group's commits doesn't fix it, delete the review branch and report failure with the reason.
+1. Determine the groups from the final diff, assigning every changed hunk to one group.
+2. For each group: plan its commits, then build them by writing each commit's file states from the source branch (`git checkout <source> -- <path>` for a file that lands whole; edit the file for one that lands in parts, copying final-form lines). Commit each step.
+3. **Check** after each group: every commit in the group builds with the repo's fast build check (for Rust: `git rebase -x 'cargo check --all-targets' <group start>`, which rewrites nothing when every check passes).
+4. **Check** at the end, all must hold:
+   - `git diff <source branch> HEAD` is empty;
+   - the full test suite passes at HEAD;
+   - the branch is in final form: per file, the added and deleted counts summed over `git log --numstat --format= <base>..HEAD` equal those in `git diff --numstat <base> HEAD`. A file whose sums exceed its diff has churn: reshape the commits that touch it.
+5. If a check fails and reshaping the commits doesn't fix it, delete the review branch and report failure with the reason.
 6. Report the series: per group, each commit's short hash, title, and reviewable lines.
