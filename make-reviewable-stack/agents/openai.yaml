@@ -1,0 +1,5 @@
+interface:
+  display_name: "Make Reviewable (stack)"
+  short_description: "Republish a PR so a human can review it (stack method)."
+policy:
+  allow_implicit_invocation: false

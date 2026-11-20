@@ -1,5 +1,5 @@
 interface:
   display_name: "Implement Spec (Reviewable)"
-  short_description: "Implement a spec on one integration branch, split into human-reviewable commits."
+  short_description: "Run implement-spec, then make-reviewable-split or -stack on its PR."
 policy:
   allow_implicit_invocation: false
